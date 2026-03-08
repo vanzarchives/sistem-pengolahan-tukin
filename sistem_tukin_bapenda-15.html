@@ -1,0 +1,1407 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistem Tukin ASN — Bapenda Prov. Banten</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f8f9fb;--white:#fff;--border:#e5e7eb;--border2:#d1d5db;--txt:#111827;--txt2:#374151;--muted:#6b7280;--muted2:#9ca3af;--acc:#2563eb;--acc-l:#eff6ff;--acc-b:#bfdbfe;--green:#16a34a;--green-l:#f0fdf4;--green-b:#bbf7d0;--amber:#d97706;--amber-l:#fffbeb;--amber-b:#fde68a;--red:#dc2626;--red-l:#fef2f2;--red-b:#fecaca;--r:10px;--sh:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);--sh2:0 4px 16px rgba(0,0,0,.08)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;font-size:13px;-webkit-font-smoothing:antialiased}
+.mono{font-family:'Geist Mono',monospace}
+
+/* LAYOUT */
+.app{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+
+/* SIDEBAR */
+.sidebar{background:var(--white);border-right:1px solid var(--border);padding:20px 16px;display:flex;flex-direction:column;gap:16px;position:sticky;top:0;height:100vh;overflow-y:auto}
+.sidebar::-webkit-scrollbar{width:3px}.sidebar::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.brand{padding-bottom:14px;border-bottom:1px solid var(--border)}
+.brand-tag{font-size:9px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--acc);margin-bottom:5px}
+.brand h2{font-size:13px;font-weight:700;line-height:1.4}
+.brand p{font-size:10px;color:var(--muted);margin-top:2px}
+
+/* NAV STEPS */
+.nav-steps{display:flex;flex-direction:column;gap:2px}
+.nav-step{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:7px;cursor:pointer;transition:all .15s;border:1px solid transparent;text-decoration:none}
+.nav-step:hover{background:var(--bg)}
+.nav-step.active{background:var(--acc-l);border-color:var(--acc-b)}
+.nav-step.active .ns-num{background:var(--acc);color:#fff;border-color:var(--acc)}
+.nav-step.done .ns-num{background:var(--green);color:#fff;border-color:var(--green)}
+.nav-step.done .ns-label{color:var(--green)}
+.ns-num{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--muted);flex-shrink:0;transition:all .2s}
+.ns-label{font-size:11.5px;font-weight:500;color:var(--txt2)}
+.ns-sub{font-size:9.5px;color:var(--muted);margin-top:1px}
+.nav-divider{height:1px;background:var(--border);margin:4px 0}
+
+/* SESSION INFO */
+.session-box{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:11px}
+.session-row{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border)}
+.session-row:last-child{border:none}
+.sl{color:var(--muted)}.sv{font-family:'Geist Mono',monospace;font-weight:600;font-size:11px}
+.btn-sm{width:100%;padding:7px;border-radius:7px;border:1px solid;cursor:pointer;font-family:'Inter';font-size:11px;font-weight:500;transition:all .15s}
+.btn-danger{background:var(--red-l);border-color:var(--red-b);color:var(--red)}
+.btn-danger:hover{background:#fee2e2}
+
+/* MAIN */
+.main{padding:28px;display:flex;flex-direction:column;gap:20px}
+
+/* PAGE HEADER */
+.page-hd{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.page-hd h1{font-size:18px;font-weight:700;letter-spacing:-.3px}
+.page-hd h1 span{color:var(--acc)}
+.page-hd p{font-size:11px;color:var(--muted);margin-top:3px}
+
+/* STEP PAGES */
+.step-page{display:none}.step-page.active{display:flex;flex-direction:column;gap:18px}
+
+/* CARDS */
+.card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:20px;box-shadow:var(--sh)}
+.card-hd{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.card-hd .line{flex:1;height:1px;background:var(--border)}
+.card-hd .badge-req{font-size:9px;font-weight:600;padding:2px 7px;border-radius:4px;text-transform:uppercase;letter-spacing:.5px}
+.req{background:var(--red-l);color:var(--red);border:1px solid var(--red-b)}
+.opt{background:var(--bg);color:var(--muted);border:1px solid var(--border)}
+
+/* UPLOAD ZONES */
+.upload-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.upload-zone{border:1.5px dashed var(--border2);border-radius:8px;padding:16px;text-align:center;cursor:pointer;transition:all .2s;position:relative;background:var(--bg)}
+.upload-zone:hover{border-color:var(--acc);background:var(--acc-l)}
+.upload-zone.loaded{border-style:solid;border-color:var(--green);background:var(--green-l)}
+.zone-reset{position:absolute;top:4px;right:4px;background:none;border:none;font-size:11px;color:var(--muted2);cursor:pointer;padding:2px 5px;border-radius:4px;line-height:1}
+.zone-reset:hover{background:var(--red-l);color:var(--red)}
+
+.upload-zone.error-state{border-color:var(--red);background:var(--red-l)}
+.uz-icon{font-size:22px;margin-bottom:6px}
+.uz-title{font-size:12px;font-weight:600;color:var(--txt2);margin-bottom:2px}
+.uz-sub{font-size:10px;color:var(--muted)}
+.uz-status{font-size:10px;margin-top:6px;font-weight:500}
+.uz-status.ok{color:var(--green)}.uz-status.err{color:var(--red)}
+.upload-zone input[type=file]{display:none}
+
+/* COLUMN MAPPER */
+.col-mapper{background:var(--amber-l);border:1px solid var(--amber-b);border-radius:8px;padding:14px;margin-top:8px}
+.col-mapper-title{font-size:11px;font-weight:600;color:var(--amber);margin-bottom:10px}
+.col-map-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:12px}
+.col-map-row label{width:180px;color:var(--txt2);font-weight:500;flex-shrink:0}
+select.col-sel{flex:1;background:var(--white);border:1px solid var(--amber-b);color:var(--txt);padding:6px 10px;border-radius:6px;font-family:'Inter';font-size:11.5px;outline:none}
+
+/* BUTTONS */
+.btn{padding:9px 18px;border-radius:7px;border:1px solid;cursor:pointer;font-family:'Inter';font-size:12px;font-weight:600;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:var(--acc);border-color:var(--acc);color:#fff}.btn-primary:hover{background:#1d4ed8}
+.btn-secondary{background:var(--white);border-color:var(--border2);color:var(--txt2)}.btn-secondary:hover{background:var(--bg)}
+.btn-green{background:var(--green);border-color:var(--green);color:#fff}.btn-green:hover{background:#15803d}
+.btn-amber{background:var(--amber-l);border-color:var(--amber-b);color:var(--amber)}.btn-amber:hover{background:#fef3c7}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+
+/* PROCESS STATUS */
+.process-steps{display:flex;flex-direction:column;gap:8px}
+.ps-item{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:8px;background:var(--bg);border:1px solid var(--border)}
+.ps-item.done{background:var(--green-l);border-color:var(--green-b)}
+.ps-item.running{background:var(--acc-l);border-color:var(--acc-b)}
+.ps-item.warn{background:var(--amber-l);border-color:var(--amber-b)}
+.ps-icon{font-size:16px;flex-shrink:0}
+.ps-label{font-size:12px;font-weight:500;flex:1}
+.ps-detail{font-size:11px;color:var(--muted);font-family:'Geist Mono',monospace}
+
+/* SUMMARY STAT GRID */
+.stat-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.stat-card{background:var(--white);border:1px solid var(--border);border-radius:8px;padding:14px;text-align:center;box-shadow:var(--sh)}
+.stat-card .sv{font-family:'Geist Mono',monospace;font-size:18px;font-weight:700;color:var(--txt);line-height:1}
+.stat-card .sl{font-size:10px;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:.5px}
+.stat-card.acc .sv{color:var(--acc)}.stat-card.green .sv{color:var(--green)}.stat-card.red .sv{color:var(--red)}.stat-card.amber .sv{color:var(--amber)}
+
+/* REVIEW TABLE */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--r);background:var(--white)}
+table{width:100%;border-collapse:collapse;font-size:11.5px;min-width:1200px}
+thead th{background:#f9fafb;padding:9px 12px;text-align:left;font-size:9.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;white-space:nowrap;border-bottom:1px solid var(--border);position:sticky;top:0}
+thead th.r{text-align:right}thead th.c{text-align:center}
+tbody tr{border-bottom:1px solid #f3f4f6;transition:background .1s}
+tbody tr:hover{background:#fafafa}
+tbody td{padding:8px 12px;vertical-align:middle}
+tbody td.r{text-align:right}tbody td.c{text-align:center}
+.tbl-name{font-weight:500;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tbl-unit{font-size:10px;color:var(--muted);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tag{display:inline-flex;padding:2px 7px;border-radius:4px;font-size:9.5px;font-weight:500;border:1px solid}
+.tag-pns{background:var(--acc-l);color:var(--acc);border-color:var(--acc-b)}
+.tag-pppk{background:var(--amber-l);color:var(--amber);border-color:var(--amber-b)}
+.tag-gol{background:var(--bg);color:var(--txt2);border-color:var(--border);font-family:'Geist Mono',monospace;font-size:9px}
+.warn-cell{color:var(--amber);font-size:10px}
+.miss-cell{color:var(--red-b);background:var(--red-l);padding:2px 6px;border-radius:4px;font-size:10px}
+.amt{font-family:'Geist Mono',monospace;font-size:11.5px;font-weight:600}
+.amt-red{color:var(--red)}.amt-green{color:var(--green)}.amt-muted{color:var(--muted);font-weight:400}
+.amt-big{font-size:12.5px;font-weight:700}
+
+/* PDF PREVIEW */
+.pdf-settings{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-group{display:flex;flex-direction:column;gap:5px}
+.form-group label{font-size:11px;font-weight:600;color:var(--txt2)}
+input[type=text],input[type=date],textarea,select{width:100%;background:var(--white);border:1px solid var(--border2);color:var(--txt);padding:8px 10px;border-radius:7px;font-family:'Inter';font-size:12px;outline:none;transition:border-color .15s}
+input:focus,textarea:focus,select:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(37,99,235,.08)}
+textarea{resize:vertical;min-height:60px}
+
+/* TOAST */
+.toast{position:fixed;bottom:20px;right:20px;z-index:9999;background:var(--txt);color:#fff;padding:10px 16px;border-radius:8px;font-size:12px;font-weight:500;box-shadow:var(--sh2);transform:translateY(60px);opacity:0;transition:all .25s;pointer-events:none;max-width:320px}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{background:var(--green)}.toast.error{background:var(--red)}.toast.warn{background:var(--amber)}
+
+/* ALERT */
+.alert{padding:10px 14px;border-radius:8px;font-size:12px;display:flex;gap:8px;align-items:flex-start}
+.alert-warn{background:var(--amber-l);border:1px solid var(--amber-b);color:var(--amber)}
+.alert-info{background:var(--acc-l);border:1px solid var(--acc-b);color:var(--acc)}
+.alert-success{background:var(--green-l);border:1px solid var(--green-b);color:var(--green)}
+
+/* PRINT/PDF PREVIEW */
+#pdfPreview{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;overflow:auto;padding:30px}
+.pdf-modal{background:var(--white);max-width:900px;margin:0 auto;border-radius:12px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.pdf-modal-hd{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.pdf-modal-hd h3{font-size:14px;font-weight:600}
+.pdf-close{background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);padding:0 4px}
+.pdf-body{padding:20px}
+
+@media print{
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  body > *:not(#pdfPreview){display:none!important}
+  #pdfPreview{display:block!important;position:static!important;background:none!important;padding:0!important;overflow:visible!important}
+  .pdf-modal{box-shadow:none!important;border-radius:0!important;max-width:100%!important}
+  .pdf-modal-hd,.pdf-modal > div:last-child{display:none!important}
+  .pdf-body{padding:10mm!important;overflow:visible!important}
+  table{page-break-inside:auto}
+  tr{page-break-inside:avoid;page-break-after:auto}
+  thead{display:table-header-group}
+  tfoot{display:table-footer-group}
+  @page{margin:10mm;size:A4 landscape}
+}
+</style>
+</head>
+<body>
+<div class="toast" id="toast"></div>
+<div id="pdfPreview">
+  <div class="pdf-modal">
+    <div class="pdf-modal-hd">
+      <h3>Preview Daftar Bayar</h3>
+      <button class="pdf-close" onclick="closePdfPreview()">✕</button>
+    </div>
+    <div class="pdf-body" id="pdfContent"></div>
+    <div style="padding:16px 20px;border-top:1px solid var(--border);display:flex;gap:10px">
+      <button class="btn btn-primary" onclick="printPDF()">🖨 Print / Save PDF</button>
+      <button class="btn btn-secondary" onclick="closePdfPreview()">Tutup</button>
+    </div>
+  </div>
+</div>
+
+<div class="app">
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="brand">
+    <div class="brand-tag">Sistem Tukin</div>
+    <h2>Bapenda<br>Prov. Banten</h2>
+    <p id="sidebarPeriode">Belum ada data</p>
+  </div>
+
+  <div class="nav-steps" id="navSteps">
+    <div class="nav-step active" data-step="1" onclick="goStep(1)">
+      <div class="ns-num">1</div>
+      <div><div class="ns-label">Upload File</div><div class="ns-sub">BKD, Gaji, Potongan</div></div>
+    </div>
+    <div class="nav-step" data-step="2" onclick="goStep(2)">
+      <div class="ns-num">2</div>
+      <div><div class="ns-label">Proses Data</div><div class="ns-sub">Match & Hitung</div></div>
+    </div>
+    <div class="nav-step" data-step="3" onclick="goStep(3)">
+      <div class="ns-num">3</div>
+      <div><div class="ns-label">Review</div><div class="ns-sub">Cek hasil olahan</div></div>
+    </div>
+    <div class="nav-step" data-step="4" onclick="goStep(4)">
+      <div class="ns-num">4</div>
+      <div><div class="ns-label">Output PDF</div><div class="ns-sub">Daftar bayar resmi</div></div>
+    </div>
+  </div>
+
+  <div class="nav-divider"></div>
+
+  <div class="session-box" id="sessionBox">
+    <div class="session-row"><span class="sl">BKD</span><span class="sv" id="ss-bkd">—</span></div>
+    <div class="session-row"><span class="sl">Plt</span><span class="sv" id="ss-plt">—</span></div>
+    <div class="session-row"><span class="sl">Gaji PNS</span><span class="sv" id="ss-gaji-pns">—</span></div>
+    <div class="session-row"><span class="sl">Gaji PPPK</span><span class="sv" id="ss-gaji-pppk">—</span></div>
+    <div class="session-row"><span class="sl">Koperasi</span><span class="sv" id="ss-kop">—</span></div>
+    <div class="session-row"><span class="sl">BPR Serang</span><span class="sv" id="ss-bprs">—</span></div>
+    <div class="session-row"><span class="sl">BPR Balaraja</span><span class="sv" id="ss-bprb">—</span></div>
+    <div class="session-row"><span class="sl">Norek/NPWP</span><span class="sv" id="ss-norek">—</span></div>
+    <div class="session-row"><span class="sl">Pegawai</span><span class="sv" id="ss-total">—</span></div>
+  </div>
+
+  <button class="btn-sm btn-danger" onclick="clearSession()">🗑 Reset Sesi</button>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="page-hd">
+    <div>
+      <h1>Sistem Pengolahan <span>Tukin ASN</span></h1>
+      <p>Badan Pendapatan Daerah · Pemerintah Provinsi Banten</p>
+    </div>
+    <div id="periodeDisplay" style="background:var(--amber-l);border:1px solid var(--amber-b);color:var(--amber);padding:8px 14px;border-radius:8px;font-family:'Geist Mono',monospace;font-size:13px;font-weight:700;display:none"></div>
+  </div>
+
+  <!-- STEP 1: UPLOAD -->
+  <div class="step-page active" id="step-1">
+    <div class="card">
+      <div class="card-hd">Upload File Input <span class="line"></span></div>
+      <div class="upload-grid">
+
+        <!-- BKD -->
+        <div class="upload-zone" id="zone-bkd" onclick="if(!this.classList.contains('loaded'))document.getElementById('file-bkd').click()">
+          <input type="file" id="file-bkd" accept=".xlsx,.xls" onchange="handleUpload('bkd',this)">
+          <div class="uz-icon">📋</div>
+          <div class="uz-title">File Rekom BKD</div>
+          <div class="uz-sub">Rekomendasi Tukin dari BKD</div>
+          <div class="uz-status" id="uz-bkd">Wajib · .xlsx</div>
+        </div>
+
+        <!-- Rekom Plt -->
+        <div class="upload-zone" id="zone-plt" onclick="if(!this.classList.contains('loaded'))document.getElementById('file-plt').click()">
+          <input type="file" id="file-plt" accept=".xlsx,.xls" onchange="handleUpload('plt',this)">
+          <div class="uz-icon">📌</div>
+          <div class="uz-title">File Rekom Plt</div>
+          <div class="uz-sub">Tambahan Tukin Plt</div>
+          <div class="uz-status" id="uz-plt">Opsional · .xlsx</div>
+        </div>
+
+        <!-- Gaji PNS -->
+        <div class="upload-zone" id="zone-gaji-pns" onclick="if(!this.classList.contains('loaded'))document.getElementById('file-gaji-pns').click()">
+          <input type="file" id="file-gaji-pns" accept=".xlsx,.xls" onchange="handleUpload('gajiPNS',this)">
+          <div class="uz-icon">💼</div>
+          <div class="uz-title">File Gaji PNS</div>
+          <div class="uz-sub">Gaji Pokok PNS</div>
+          <div class="uz-status" id="uz-gaji-pns">Wajib · .xlsx</div>
+        </div>
+
+        <!-- Gaji PPPK -->
+        <div class="upload-zone" id="zone-gaji-pppk" onclick="if(!this.classList.contains('loaded'))document.getElementById('file-gaji-pppk').click()">
+          <input type="file" id="file-gaji-pppk" accept=".xlsx,.xls" onchange="handleUpload('gajiPPPK',this)">
+          <div class="uz-icon">💼</div>
+          <div class="uz-title">File Gaji PPPK</div>
+          <div class="uz-sub">Gaji Pokok PPPK</div>
+          <div class="uz-status" id="uz-gaji-pppk">Wajib · .xlsx</div>
+        </div>
+
+        <!-- KORPRI -->
+        <div class="upload-zone" id="zone-kop" onclick="if(!this.classList.contains('loaded'))document.getElementById('file-kop').click()">
+          <input type="file" id="file-kop" accept=".xlsx,.xls" onchange="handleUpload('kop',this)">
+          <div class="uz-icon">🏧</div>
+          <div class="uz-title">File KORPRI</div>
+          <div class="uz-sub">Potongan KORPRI - PNS</div>
+          <div class="uz-status" id="uz-kop">Opsional · .xlsx</div>
+        </div>
+
+        <!-- BPR Serang -->
+        <div class="upload-zone" id="zone-bprs" onclick="if(!this.classList.contains('loaded'))document.getElementById('file-bprs').click()">
+          <input type="file" id="file-bprs" accept=".xlsx,.xls" onchange="handleUpload('bprs',this)">
+          <div class="uz-icon">🏧</div>
+          <div class="uz-title">File BPR Serang</div>
+          <div class="uz-sub">Potongan BPR Serang - PNS</div>
+          <div class="uz-status" id="uz-bprs">Opsional · .xlsx</div>
+        </div>
+
+        <!-- BPR Balaraja -->
+        <div class="upload-zone" id="zone-bprb" onclick="if(!this.classList.contains('loaded'))document.getElementById('file-bprb').click()">
+          <input type="file" id="file-bprb" accept=".xlsx,.xls" onchange="handleUpload('bprb',this)">
+          <div class="uz-icon">🏧</div>
+          <div class="uz-title">File BPR Balaraja</div>
+          <div class="uz-sub">Potongan BPR Balaraja - PNS</div>
+          <div class="uz-status" id="uz-bprb">Opsional · .xlsx</div>
+        </div>
+
+        <!-- Norek & NPWP -->
+        <div class="upload-zone" id="zone-norek" onclick="if(!this.classList.contains('loaded'))document.getElementById('file-norek').click()">
+          <input type="file" id="file-norek" accept=".xlsx,.xls" onchange="handleUpload('norek',this)">
+          <div class="uz-icon">🏦</div>
+          <div class="uz-title">File Masterfile Rekening &amp; NPWP Pegawai</div>
+          <div class="uz-sub">Nomor Rekening &amp; NPWP Pegawai</div>
+          <div class="uz-status" id="uz-norek">Wajib · .xlsx</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Column Mapper Gaji -->
+    <div class="card" id="gajiPNSMapperCard" style="display:none">
+      <div class="card-hd">Mapping Kolom File Gaji PNS <span class="line"></span></div>
+      <div class="alert alert-info" style="margin-bottom:12px">
+        ℹ️ Petakan kolom file gaji PNS. Sistem akan otomatis mencari baris header.
+      </div>
+      <div class="col-mapper">
+        <div class="col-mapper-title">File Gaji PNS — petakan kolom:</div>
+        <div class="col-map-row"><label>NIP / NIK Pegawai</label><select class="col-sel" id="map-nip-gaji-pns"><option value="">— Pilih kolom —</option></select></div>
+        <div class="col-map-row"><label>Gaji Pokok</label><select class="col-sel" id="map-gajipokok-pns"><option value="">— Pilih kolom —</option></select></div>
+      </div>
+    </div>
+
+    <div class="card" id="gajiPPPKMapperCard" style="display:none">
+      <div class="card-hd">Mapping Kolom File Gaji PPPK <span class="line"></span></div>
+      <div class="alert alert-info" style="margin-bottom:12px">
+        ℹ️ Petakan kolom file gaji PPPK. Sistem akan otomatis mencari baris header.
+      </div>
+      <div class="col-mapper">
+        <div class="col-mapper-title">File Gaji PPPK — petakan kolom:</div>
+        <div class="col-map-row"><label>NIP / NIK Pegawai</label><select class="col-sel" id="map-nip-gaji-pppk"><option value="">— Pilih kolom —</option></select></div>
+        <div class="col-map-row"><label>Gaji Pokok</label><select class="col-sel" id="map-gajipokok-pppk"><option value="">— Pilih kolom —</option></select></div>
+      </div>
+    </div>
+
+    <!-- Column Mapper Norek -->
+    <div class="card" id="norekMapperCard" style="display:none">
+      <div class="card-hd">Mapping Kolom File Norek & NPWP <span class="line"></span></div>
+      <div class="col-mapper">
+        <div class="col-mapper-title">Petakan kolom file norek/NPWP:</div>
+        <div class="col-map-row"><label>NIP / NIK Pegawai</label><select class="col-sel" id="map-nip-norek"><option value="">— Pilih kolom —</option></select></div>
+        <div class="col-map-row"><label>Nomor Rekening &amp; NPWP Pegawai</label><select class="col-sel" id="map-norek"><option value="">— Pilih kolom —</option></select></div>
+        <div class="col-map-row"><label>NPWP</label><select class="col-sel" id="map-npwp"><option value="">— Pilih kolom —</option></select></div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="goStep(2)">Lanjut → Proses Data</button>
+      <span style="font-size:11px;color:var(--muted)">File wajib: BKD, Gaji Pokok, Norek/NPWP</span>
+    </div>
+  </div>
+
+  <!-- STEP 2: PROSES -->
+  <div class="step-page" id="step-2">
+    <div class="card">
+      <div class="card-hd">Proses & Match Data <span class="line"></span></div>
+      <div class="process-steps" id="processSteps">
+        <div class="ps-item" id="ps-bkd"><div class="ps-icon">📋</div><div class="ps-label">Parse file BKD</div><div class="ps-detail" id="ps-bkd-d">Menunggu...</div></div>
+        <div class="ps-item" id="ps-gaji"><div class="ps-icon">💼</div><div class="ps-label">Parse & match file Gaji Pokok</div><div class="ps-detail" id="ps-gaji-d">Menunggu...</div></div>
+        <div class="ps-item" id="ps-pajak"><div class="ps-icon">🧮</div><div class="ps-label">Hitung PPh 21 TER (TK/0) — PNS: DTP · PPPK: Tidak kena PPh 21</div><div class="ps-detail" id="ps-pajak-d">Menunggu...</div></div>
+        <div class="ps-item" id="ps-baznas"><div class="ps-icon">🕌</div><div class="ps-label">Hitung potongan BAZNAS (2.5% × Tukin)</div><div class="ps-detail" id="ps-baznas-d">Menunggu...</div></div>
+        <div class="ps-item" id="ps-plt"><div class="ps-icon">📌</div><div class="ps-label">Match tambahan tukin Plt</div><div class="ps-detail" id="ps-plt-d">Menunggu...</div></div>
+        <div class="ps-item" id="ps-kop"><div class="ps-icon">🤝</div><div class="ps-label">Match potongan Koperasi Korpri</div><div class="ps-detail" id="ps-kop-d">Menunggu...</div></div>
+        <div class="ps-item" id="ps-bprs"><div class="ps-icon">🏧</div><div class="ps-label">Match potongan BPR Serang</div><div class="ps-detail" id="ps-bprs-d">Menunggu...</div></div>
+        <div class="ps-item" id="ps-bprb"><div class="ps-icon">🏧</div><div class="ps-label">Match potongan BPR Balaraja</div><div class="ps-detail" id="ps-bprb-d">Menunggu...</div></div>
+        <div class="ps-item" id="ps-norek"><div class="ps-icon">🏦</div><div class="ps-label">Match Norek & NPWP</div><div class="ps-detail" id="ps-norek-d">Menunggu...</div></div>
+        <div class="ps-item" id="ps-nett"><div class="ps-icon">✅</div><div class="ps-label">Hitung take home (bersih diterima)</div><div class="ps-detail" id="ps-nett-d">Menunggu...</div></div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="processData()">⚙️ Mulai Proses</button>
+      <button class="btn btn-secondary" onclick="goStep(1)">← Kembali</button>
+    </div>
+  </div>
+
+  <!-- STEP 3: REVIEW -->
+  <div class="step-page" id="step-3">
+    <div class="stat-grid" id="reviewStats"></div>
+
+    <div class="card" id="warningsCard" style="display:none">
+      <div class="card-hd">⚠️ Perhatian <span class="line"></span></div>
+      <div id="warningsList"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-hd">Hasil Olahan — Semua Pegawai <span class="line"></span>
+        <button class="btn btn-secondary" style="padding:4px 10px;font-size:10px" onclick="exportReviewCSV()">↓ Export CSV</button>
+      </div>
+      <div class="tbl-wrap" style="max-height:520px;overflow-y:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>No</th><th>NIP</th><th>Nama</th><th>Gol</th><th>Jenis</th><th>Unit Kerja</th>
+              <th class="r">Tukin Bruto</th>
+              <th class="r">Gaji Pokok</th>
+              <th class="r">Tunjab</th>
+              <th class="r">DPP Pajak</th>
+              <th class="c">TER</th>
+              <th class="r">PPh 21</th>
+              <th class="r">BAZNAS</th>
+              <th class="r">Koperasi</th>
+              <th class="r">BPR Serang</th>
+              <th class="r">BPR Balaraja</th>
+              <th class="r">Total Potongan</th>
+              <th class="r">Bersih Diterima</th>
+              <th>Norek</th><th>NPWP</th>
+            </tr>
+          </thead>
+          <tbody id="reviewBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-green" onclick="goStep(4)">Lanjut → Output PDF</button>
+      <button class="btn btn-secondary" onclick="goStep(2)">← Proses Ulang</button>
+    </div>
+  </div>
+
+  <!-- STEP 4: OUTPUT PDF -->
+  <div class="step-page" id="step-4">
+    <div class="card">
+      <div class="card-hd">Pengaturan Dokumen <span class="line"></span></div>
+      <div class="pdf-settings">
+        <div class="form-group">
+          <label>Bulan & Tahun</label>
+          <input type="text" id="pdf-periode" placeholder="Januari 2026">
+        </div>
+        <div class="form-group">
+          <label>Nama Satuan Organisasi</label>
+          <input type="text" id="pdf-satorg" value="BADAN PENDAPATAN DAERAH">
+        </div>
+        <div class="form-group">
+          <label>Nama Kepala Badan (Kaban)</label>
+          <input type="text" id="pdf-kaban" placeholder="Nama lengkap + gelar">
+        </div>
+        <div class="form-group">
+          <label>NIP Kepala Badan</label>
+          <input type="text" id="pdf-kaban-nip" placeholder="NIP Kaban">
+        </div>
+        <div class="form-group">
+          <label>Nama Bendahara</label>
+          <input type="text" id="pdf-bendahara" placeholder="Nama lengkap + gelar">
+        </div>
+        <div class="form-group">
+          <label>NIP Bendahara</label>
+          <input type="text" id="pdf-bendahara-nip" placeholder="NIP Bendahara">
+        </div>
+        <div class="form-group">
+          <label>Tempat & Tanggal Tanda Tangan</label>
+          <input type="text" id="pdf-tempat" placeholder="Serang, __ Januari 2026">
+        </div>
+        <div class="form-group">
+          <label>Filter Unit Kerja (kosongkan = semua)</label>
+          <select id="pdf-unit"><option value="">Semua Unit</option></select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-hd">Ringkasan Output <span class="line"></span></div>
+      <div class="stat-grid" id="pdfStats"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-hd">Generate Output <span class="line"></span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+
+        <!-- PDF -->
+        <div style="border:1px solid var(--acc-b);border-radius:8px;padding:14px;background:var(--acc-l)">
+          <div style="font-size:12px;font-weight:700;color:var(--acc);margin-bottom:10px">📄 Daftar Pembayaran (PDF)</div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Tukin Bruto → PPh 21 → BAZNAS → <strong>Tukin Bersih</strong><br>Dengan TTD Kaban & Bendahara</div>
+          <div style="display:flex;flex-direction:column;gap:7px">
+            <button class="btn btn-primary" style="justify-content:center" onclick="generatePDF('semua')">📄 Semua Pegawai</button>
+            <button class="btn btn-secondary" style="justify-content:center;border-color:var(--acc-b)" onclick="generatePDF('PNS')">📄 PNS saja</button>
+            <button class="btn btn-secondary" style="justify-content:center;border-color:var(--acc-b)" onclick="generatePDF('PPPK')">📄 PPPK saja</button>
+          </div>
+        </div>
+
+        <!-- Excel -->
+        <div style="border:1px solid var(--green-b);border-radius:8px;padding:14px;background:var(--green-l)">
+          <div style="font-size:12px;font-weight:700;color:var(--green);margin-bottom:10px">📊 Daftar Transfer (Excel)</div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Nama · NIP · Norek · <strong>Bersih Diterima</strong><br>Setelah semua potongan · Siap kirim Bank Banten</div>
+          <div style="display:flex;flex-direction:column;gap:7px">
+            <button class="btn btn-green" style="justify-content:center" onclick="exportTransferExcel('PNS')">📊 File PNS (.xlsx)</button>
+            <button class="btn btn-green" style="justify-content:center;background:#15803d" onclick="exportTransferExcel('PPPK')">📊 File PPPK (.xlsx)</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="goStep(3)">← Review</button>
+    </div>
+  </div>
+
+</main>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════════
+const STATE = {
+  files: { bkd:null, plt:null, gajiPNS:null, gajiPPPK:null, kop:null, bprs:null, bprb:null, norek:null },
+  rawData: { bkd:[], plt:{}, gajiPNS:{}, gajiPPPK:{}, kop:{}, bprs:{}, bprb:{}, norek:{} },
+  processed: [],
+  currentStep: 1,
+  gajiCols: [], norekCols: []
+};
+
+// ═══════════════════════════════════════════════════════════════════
+// TER PPh 21 KATEGORI A (TK/0) — PMK 168/2023
+// ═══════════════════════════════════════════════════════════════════
+const TER_A = [
+  [5400000,0],[5650000,.25],[5950000,.5],[6300000,.75],[6750000,1],
+  [7500000,1.25],[8550000,1.5],[9650000,1.75],[10050000,2],[10350000,2.25],
+  [10700000,2.5],[11050000,3],[11600000,3.5],[12500000,4],[13750000,5],
+  [15100000,6],[16950000,7],[19750000,8],[24150000,9],[26450000,10],
+  [28000000,11],[30050000,12],[32400000,13],[35400000,14],[39100000,15],
+  [43850000,16],[47800000,17],[51400000,18],[56300000,19],[62200000,20],
+  [68600000,21],[77500000,22],[89000000,23],[103000000,24],[125000000,25],
+  [157000000,26],[206000000,27],[337000000,28],[454000000,29],[550000000,30],
+  [695000000,31],[910000000,32],[1400000000,33],[Infinity,34]
+];
+function getTER(bruto){ for(const[b,t]of TER_A)if(bruto<=b)return t; return 34; }
+
+// ═══════════════════════════════════════════════════════════════════
+// FORMAT UTILS
+// ═══════════════════════════════════════════════════════════════════
+const fmtRp = v => v==null||v===''?'—':'Rp '+Math.round(v).toLocaleString('id-ID');
+const fmtM  = v => 'Rp '+(v/1e9).toFixed(2)+' M';
+const fmtJt = v => 'Rp '+(v/1e6).toFixed(1)+' Jt';
+const cleanNIP = s => String(s||'').replace(/['\s]/g,'').trim();
+
+// ═══════════════════════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════════════════════
+function toast(msg, type=''){
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.className='toast show'+(type?' '+type:'');
+  setTimeout(()=>el.className='toast',3000);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════════════════
+function goStep(n){
+  if(n===2&&!STATE.rawData.bkd.length){ toast('Upload file BKD dulu!','error'); return; }
+  if(n===3&&!STATE.processed.length){ toast('Proses data dulu!','error'); return; }
+  if(n===4&&!STATE.processed.length){ toast('Proses data dulu!','error'); return; }
+  STATE.currentStep=n;
+  document.querySelectorAll('.step-page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('step-'+n).classList.add('active');
+  document.querySelectorAll('.nav-step').forEach(s=>{
+    const sn=parseInt(s.dataset.step);
+    s.classList.remove('active','done');
+    if(sn===n) s.classList.add('active');
+    else if(sn<n) s.classList.add('done');
+  });
+  if(n===3) renderReview();
+  if(n===4) renderPDFStep();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// FILE UPLOAD & PARSE
+// ═══════════════════════════════════════════════════════════════════
+function handleUpload(key, input){
+  const file = input.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb = XLSX.read(e.target.result, {type:'binary'});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const raw = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+      STATE.files[key] = file.name;
+
+      if(key==='bkd') parseBKD(raw);
+      else if(key==='plt') parseSimple('plt',raw);
+      else if(key==='gajiPNS') parseGaji(raw,'PNS');
+      else if(key==='gajiPPPK') parseGaji(raw,'PPPK');
+      else if(key==='norek') parseNorek(raw);
+      else parseSimple(key, raw);
+
+      updateZone(key, 'ok', file.name);
+      updateSidebarStatus();
+    } catch(err){
+      updateZone(key, 'err', 'Error: '+err.message);
+      toast('Gagal parse file: '+err.message, 'error');
+    }
+  };
+  reader.readAsBinaryString(file);
+}
+
+function updateZone(key, status, msg){
+  const idMap = { gajiPNS:'gaji-pns', gajiPPPK:'gaji-pppk' };
+  const htmlKey = idMap[key] || key;
+  const zone = document.getElementById('zone-'+htmlKey);
+  const stat = document.getElementById('uz-'+htmlKey);
+  if(!zone) return;
+  zone.className = 'upload-zone ' + (status==='ok'?'loaded':'error-state');
+  if(stat){ stat.className = 'uz-status ' + (status==='ok'?'ok':'err'); stat.textContent = status==='ok'?'✓ '+msg:'✗ '+msg; }
+  // Remove old reset btn if any
+  const oldBtn = zone.querySelector('.zone-reset');
+  if(oldBtn) oldBtn.remove();
+  // Add reset button when loaded
+  if(status==='ok'){
+    const fid = zone.querySelector('input[type=file]') ? zone.querySelector('input[type=file]').id : null;
+    const btn = document.createElement('button');
+    btn.className = 'zone-reset';
+    btn.textContent = '✕';
+    btn.title = 'Upload ulang';
+    btn.onclick = e => {
+      e.stopPropagation();
+      zone.className = 'upload-zone';
+      stat.className = 'uz-status';
+      const origKey = Object.keys({gajiPNS:'gaji-pns',gajiPPPK:'gaji-pppk'}).find(k=>({gajiPNS:'gaji-pns',gajiPPPK:'gaji-pppk'})[k]===htmlKey) || htmlKey;
+      const wajib = ['bkd','gaji-pns','gaji-pppk','norek'];
+      stat.textContent = (wajib.includes(htmlKey)?'Wajib':'Opsional') + ' · .xlsx';
+      btn.remove();
+      if(fid){ const inp=document.getElementById(fid); if(inp){inp.value='';} }
+    };
+    zone.appendChild(btn);
+  }
+}
+
+// Parse BKD (format khusus: header di row 9, data mulai row 11)
+function parseBKD(raw){
+  // Find header row
+  let headerRow = -1;
+  for(let i=0;i<raw.length;i++){
+    const r = raw[i].map(c=>String(c).trim().toUpperCase());
+    if(r.includes('NIP')&&r.includes('NAMA')) { headerRow=i; break; }
+  }
+  if(headerRow<0){ toast('Header BKD tidak ditemukan','error'); return; }
+  const headers = raw[headerRow].map(c=>String(c).trim());
+  const idx = h => headers.findIndex(c=>c.toUpperCase().includes(h));
+  const iNIP=idx('NIP'), iNama=idx('NAMA'), iGol=idx('GOL'), iEselon=idx('ESELON'),
+        iJab=idx('JABATAN'), iJenis=idx('JENIS'), iUnit=idx('UNIT'),
+        iTunMaks=idx('TUNJANGAN MAKSI'), iQuad=idx('QUADRAN'), iTKD=idx('NILAI TKD'),
+        iBesaran=idx('BESARAN TUNJ'), iTundapat=headers.findIndex(c=>c.toUpperCase().includes('DIPEROLEH'));
+  const data=[];
+  for(let i=headerRow+2;i<raw.length;i++){
+    const r=raw[i];
+    const nip=cleanNIP(r[iNIP]);
+    const tukin=parseFloat(r[iTundapat>=0?iTundapat:iBesaran])||0;
+    if(!nip||!r[iNama]) continue;
+    if(String(r[0]).toUpperCase().includes('JUMLAH')) break;
+    data.push({
+      no:data.length+1, nip, nama:String(r[iNama]).trim(),
+      gol:String(r[iGol]||'').trim(), eselon:String(r[iEselon]||'').trim(),
+      jabatan:String(r[iJab]||'').trim(), jenis:String(r[iJenis]||'').trim(),
+      unit:String(r[iUnit]||'').trim(),
+      tunMaks:parseFloat(r[iTunMaks])||0,
+      quad:parseInt(r[iQuad])||0, tkd:parseFloat(r[iTKD])||0,
+      tukin
+    });
+  }
+  STATE.rawData.bkd=data;
+  // Extract periode
+  for(let i=0;i<15&&i<raw.length;i++){
+    const row=raw[i];
+    for(let j=0;j<row.length;j++){
+      const v=String(row[j]||'').trim();
+      if(v.toUpperCase().includes('JANUARI')||v.toUpperCase().includes('FEBRUARI')||
+         v.toUpperCase().includes('MARET')||v.toUpperCase().includes('APRIL')||
+         v.toUpperCase().includes('MEI')||v.toUpperCase().includes('JUNI')||
+         v.toUpperCase().includes('JULI')||v.toUpperCase().includes('AGUSTUS')||
+         v.toUpperCase().includes('SEPTEMBER')||v.toUpperCase().includes('OKTOBER')||
+         v.toUpperCase().includes('NOVEMBER')||v.toUpperCase().includes('DESEMBER')){
+        const periode=v.replace(':','').trim();
+        const tahunRow=raw.find(r=>String(r[0]||'').toUpperCase().includes('TAHUN'));
+        const tahun=tahunRow?String(tahunRow[2]||'').replace(':','').trim():'';
+        const fullPeriode=periode+(tahun?' '+tahun:'');
+        document.getElementById('periodeDisplay').textContent=fullPeriode;
+        document.getElementById('periodeDisplay').style.display='block';
+        document.getElementById('sidebarPeriode').textContent=fullPeriode;
+        document.getElementById('pdf-periode').value=fullPeriode;
+        break;
+      }
+    }
+  }
+  toast(`BKD: ${data.length} pegawai berhasil di-parse`,'success');
+}
+
+// Parse Gaji - tampilkan column mapper
+function parseGaji(raw, jenis='PNS'){
+  const suffix = jenis==='PNS' ? '-pns' : '-pppk';
+  const cardId = jenis==='PNS' ? 'gajiPNSMapperCard' : 'gajiPPPKMapperCard';
+  // Find header row automatically
+  let headerRow=-1;
+  for(let i=0;i<Math.min(20,raw.length);i++){
+    const r=raw[i].filter(c=>c!='');
+    if(r.length>3){ headerRow=i; break; }
+  }
+  if(headerRow<0) headerRow=0;
+  const headers=raw[headerRow].map(c=>String(c).trim()).filter(c=>c);
+  if(jenis==='PNS'){
+    STATE.rawData._gajiPNSRaw=raw;
+    STATE.rawData._gajiPNSHeaderRow=headerRow;
+  } else {
+    STATE.rawData._gajiPPPKRaw=raw;
+    STATE.rawData._gajiPPPKHeaderRow=headerRow;
+  }
+  // Populate dropdowns
+  const sels=['map-nip-gaji'+suffix,'map-gajipokok'+suffix];
+  sels.forEach(id=>{
+    const sel=document.getElementById(id);
+    sel.innerHTML='<option value="">— Pilih kolom —</option>';
+    headers.forEach((h,i)=>{ const o=document.createElement('option'); o.value=i; o.textContent=h; sel.appendChild(o); });
+  });
+  // Auto-detect
+  headers.forEach((h,i)=>{
+    const hu=h.toUpperCase();
+    if(hu.includes('NIP')||hu.includes('NIK')) trySetSel('map-nip-gaji'+suffix,i);
+    if(hu.includes('GAJI POKOK')||hu==='GAJI') trySetSel('map-gajipokok'+suffix,i);
+
+  });
+  document.getElementById(cardId).style.display='block';
+  toast('File gaji '+jenis+' di-upload. Cek mapping kolom.','warn');
+}
+
+function trySetSel(id,val){ const el=document.getElementById(id); if(el) el.value=val; }
+
+function applyGajiMapping(jenis='PNS'){
+  const suffix = jenis==='PNS' ? '-pns' : '-pppk';
+  const raw = jenis==='PNS' ? STATE.rawData._gajiPNSRaw : STATE.rawData._gajiPPPKRaw;
+  const hr  = jenis==='PNS' ? STATE.rawData._gajiPNSHeaderRow : STATE.rawData._gajiPPPKHeaderRow;
+  if(!raw){ toast('File gaji '+jenis+' belum diupload!','error'); return; }
+  const iNIP=parseInt(document.getElementById('map-nip-gaji'+suffix).value);
+  const iGP =parseInt(document.getElementById('map-gajipokok'+suffix).value);
+  const iTJ = NaN;
+  if(isNaN(iNIP)||isNaN(iGP)){ toast('Pilih kolom NIP dan Gaji Pokok dulu!','error'); return; }
+  const data={};
+  for(let i=hr+1;i<raw.length;i++){
+    const r=raw[i];
+    const nip=cleanNIP(r[iNIP]);
+    if(!nip) continue;
+    data[nip]={
+      gajiPokok: parseFloat(String(r[iGP]||'').replace(/[^0-9.-]/g,''))||0,
+      tunjab: isNaN(iTJ)?0:(parseFloat(String(r[iTJ]||'').replace(/[^0-9.-]/g,''))||0)
+    };
+  }
+  if(jenis==='PNS') STATE.rawData.gajiPNS=data;
+  else STATE.rawData.gajiPPPK=data;
+  toast(`Gaji ${jenis}: ${Object.keys(data).length} baris berhasil di-map`,'success');
+}
+
+// Parse Norek
+function parseNorek(raw){
+  let headerRow=-1;
+  for(let i=0;i<Math.min(20,raw.length);i++){
+    const r=raw[i].filter(c=>c!='');
+    if(r.length>2){ headerRow=i; break; }
+  }
+  if(headerRow<0) headerRow=0;
+  const headers=raw[headerRow].map(c=>String(c).trim()).filter(c=>c);
+  STATE.rawData._norekRaw=raw;
+  STATE.rawData._norekHeaders=headers;
+  STATE.rawData._norekHeaderRow=headerRow;
+  const sels=['map-nip-norek','map-norek','map-npwp'];
+  sels.forEach(id=>{
+    const sel=document.getElementById(id);
+    sel.innerHTML='<option value="">— Pilih / Kosongkan —</option>';
+    headers.forEach((h,i)=>{ const o=document.createElement('option'); o.value=i; o.textContent=h; sel.appendChild(o); });
+  });
+  headers.forEach((h,i)=>{
+    const hu=h.toUpperCase();
+    if(hu.includes('NIP')||hu.includes('NIK')) trySetSel('map-nip-norek',i);
+    if(hu.includes('REKENING')||hu.includes('NOREK')||hu.includes('NO REC')) trySetSel('map-norek',i);
+    if(hu.includes('NPWP')) trySetSel('map-npwp',i);
+  });
+  document.getElementById('norekMapperCard').style.display='block';
+  toast('File norek/NPWP di-upload. Cek mapping kolom.','warn');
+}
+
+function applyNorekMapping(){
+  const raw=STATE.rawData._norekRaw;
+  const hr=STATE.rawData._norekHeaderRow;
+  const iNIP=parseInt(document.getElementById('map-nip-norek').value);
+  const iNR=parseInt(document.getElementById('map-norek').value);
+  const iNP=parseInt(document.getElementById('map-npwp').value);
+  if(isNaN(iNIP)){ toast('Pilih kolom NIP dulu!','error'); return; }
+  const data={};
+  for(let i=hr+1;i<raw.length;i++){
+    const r=raw[i];
+    const nip=cleanNIP(r[iNIP]);
+    if(!nip) continue;
+    data[nip]={
+      norek: isNaN(iNR)?'':(String(r[iNR]||'').trim()),
+      npwp: isNaN(iNP)?'':(String(r[iNP]||'').trim())
+    };
+  }
+  STATE.rawData.norek=data;
+  toast(`Norek/NPWP: ${Object.keys(data).length} baris berhasil di-map`,'success');
+}
+
+// Parse Simple (Koperasi, BPR) - NIP + nama + nominal
+function parseSimple(key, raw){
+  // Find header row & nominal column
+  let headerRow=-1;
+  for(let i=0;i<Math.min(15,raw.length);i++){
+    const r=raw[i].filter(c=>c!='');
+    if(r.length>=2){ headerRow=i; break; }
+  }
+  if(headerRow<0) headerRow=0;
+  const headers=raw[headerRow].map(c=>String(c).toUpperCase().trim());
+  // Try to find NIP col and amount col
+  let iNIP=headers.findIndex(h=>h.includes('NIP')||h.includes('NIK'));
+  let iAmt=headers.findIndex(h=>h.includes('NOMINAL')||h.includes('POTONGAN')||h.includes('JUMLAH')||h.includes('ANGSURAN'));
+  // Fallback: assume col 0 = NIP, last numeric col = amount
+  if(iNIP<0) iNIP=0;
+  const data={};
+  for(let i=headerRow+1;i<raw.length;i++){
+    const r=raw[i];
+    const nip=cleanNIP(r[iNIP]);
+    if(!nip||nip.length<8) continue;
+    // Find amount: use detected col, else scan for largest number
+    let amt=0;
+    if(iAmt>=0){
+      amt=parseFloat(String(r[iAmt]||'').replace(/[^0-9.-]/g,''))||0;
+    } else {
+      for(let j=0;j<r.length;j++){
+        const v=parseFloat(String(r[j]||'').replace(/[^0-9.-]/g,''))||0;
+        if(v>amt&&v>10000) amt=v;
+      }
+    }
+    if(amt>0) data[nip]=amt;
+  }
+  STATE.rawData[key]=data;
+  const label={kop:'Koperasi',bprs:'BPR Serang',bprb:'BPR Balaraja'}[key];
+  toast(`${label}: ${Object.keys(data).length} baris berhasil di-parse`,'success');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// PROCESS DATA
+// ═══════════════════════════════════════════════════════════════════
+async function processData(){
+  if(!STATE.rawData.bkd.length){ toast('File BKD belum di-upload!','error'); return; }
+
+  // Apply mappings if not done
+  if(STATE.rawData._gajiPNSRaw && !Object.keys(STATE.rawData.gajiPNS||{}).length) applyGajiMapping('PNS');
+  if(STATE.rawData._gajiPPPKRaw && !Object.keys(STATE.rawData.gajiPPPK||{}).length) applyGajiMapping('PPPK');
+  if(STATE.rawData._norekRaw && !Object.keys(STATE.rawData.norek||{}).length) applyNorekMapping();
+
+  const setPS=(id,state,detail)=>{
+    const el=document.getElementById('ps-'+id);
+    const dd=document.getElementById('ps-'+id+'-d');
+    el.className='ps-item '+(state==='done'?'done':state==='warn'?'warn':'running');
+    if(dd) dd.textContent=detail;
+  };
+
+  const delay=ms=>new Promise(r=>setTimeout(r,ms));
+
+  // Step: BKD
+  setPS('bkd','running','Memproses...');
+  await delay(200);
+  const bkd=STATE.rawData.bkd;
+  setPS('bkd','done',`${bkd.length} pegawai dimuat`);
+
+  // Step: Gaji
+  setPS('gaji','running','Matching by NIP...');
+  await delay(200);
+  const gajiPNS=STATE.rawData.gajiPNS||{};
+  const gajiPPPK=STATE.rawData.gajiPPPK||{};
+  const pnsCount=bkd.filter(d=>d.jenis==='PNS').length;
+  const pppkCount=bkd.filter(d=>d.jenis!=='PNS').length;
+  const pnsMatched=bkd.filter(d=>d.jenis==='PNS'&&gajiPNS[d.nip]).length;
+  const pppkMatched=bkd.filter(d=>d.jenis!=='PNS'&&gajiPPPK[d.nip]).length;
+  const gajiOk=(pnsMatched>0||pnsCount===0)&&(pppkMatched>0||pppkCount===0);
+  setPS('gaji', gajiOk?'done':'warn', `PNS: ${pnsMatched}/${pnsCount} · PPPK: ${pppkMatched}/${pppkCount}`);
+
+  // Step: Plt
+  const plt=STATE.rawData.plt||{};
+  setPS('plt', Object.keys(plt).length?'running':'warn', Object.keys(plt).length?'Matching...':'File tidak diupload');
+  await delay(100);
+  if(Object.keys(plt).length) setPS('plt','done',`${Object.keys(plt).filter(k=>plt[k]>0).length} match`);
+
+  // Step: Pajak
+  setPS('pajak','running','Menghitung TER...');
+  await delay(200);
+
+  // Step: BAZNAS
+  setPS('baznas','running','Menghitung...');
+  await delay(100);
+
+  // Step: Koperasi
+  const kop=STATE.rawData.kop||{};
+  setPS('kop', Object.keys(kop).length?'running':'warn', Object.keys(kop).length?'Matching...':'File tidak diupload');
+  await delay(100);
+  if(Object.keys(kop).length) setPS('kop','done',`${Object.values(kop).filter(v=>v>0).length} match`);
+
+  // Step: BPR Serang
+  const bprs=STATE.rawData.bprs||{};
+  setPS('bprs', Object.keys(bprs).length?'running':'warn', Object.keys(bprs).length?'Matching...':'File tidak diupload');
+  await delay(100);
+  if(Object.keys(bprs).length) setPS('bprs','done',`${Object.values(bprs).filter(v=>v>0).length} match`);
+
+  // Step: BPR Balaraja
+  const bprb=STATE.rawData.bprb||{};
+  setPS('bprb', Object.keys(bprb).length?'running':'warn', Object.keys(bprb).length?'Matching...':'File tidak diupload');
+  await delay(100);
+  if(Object.keys(bprb).length) setPS('bprb','done',`${Object.values(bprb).filter(v=>v>0).length} match`);
+
+  // Step: Norek
+  const norek=STATE.rawData.norek||{};
+  setPS('norek','running','Matching...');
+  await delay(100);
+  const norekMatched=bkd.filter(d=>norek[d.nip]).length;
+  setPS('norek', norekMatched>0?'done':'warn', `${norekMatched}/${bkd.length} NIP cocok`);
+
+  // Step: Nett — build final processed array
+  setPS('nett','running','Menghitung bersih...');
+  await delay(100);
+
+  STATE.processed = bkd.map(d=>{
+    const g=(d.jenis==='PNS'?gajiPNS:gajiPPPK)[d.nip]||{gajiPokok:0,tunjab:0};
+    const pltTambahan=plt[d.nip]||0;
+    const tukinBruto=d.tukin+pltTambahan;
+    const gajiPokok=g.gajiPokok||0;
+    const tunjab=g.tunjab||0;
+    const isPNS=d.jenis==='PNS';
+    // PPh 21: PNS = DTP (dihitung tapi tidak dipotong), PPPK = tidak kena PPh 21
+    const dpp=isPNS?(tukinBruto+gajiPokok+tunjab):0;
+    const ter=isPNS?getTER(dpp):0;
+    const pph21=isPNS?Math.round(dpp*ter/100):0;
+    const pph21DTP=isPNS;  // true = ditanggung pemerintah
+    const baznas=Math.round(tukinBruto*0.025);
+    // Koperasi & BPR hanya PNS
+    const potKop=isPNS?(kop[d.nip]||0):0;
+    const potBprs=isPNS?(bprs[d.nip]||0):0;
+    const potBprb=isPNS?(bprb[d.nip]||0):0;
+    // Take home: PPh21 tidak mengurangi (DTP untuk PNS, tidak ada untuk PPPK)
+    const totalPot=baznas+potKop+potBprs+potBprb;
+    const bersih=tukinBruto-totalPot;
+    const nr=norek[d.nip]||{norek:'',npwp:''};
+    return {
+      ...d, gajiPokok, tunjab, pltTambahan, tukin:tukinBruto, dpp, ter, pph21, pph21DTP, baznas,
+      potKop, potBprs, potBprb, totalPot, bersih,
+      norek:nr.norek||'', npwp:nr.npwp||''
+    };
+  });
+
+  setPS('pajak','done',`${STATE.processed.length} pegawai dihitung`);
+  setPS('baznas','done',`Total: ${fmtJt(STATE.processed.reduce((a,d)=>a+d.baznas,0))}`);
+  setPS('nett','done',`Total bersih: ${fmtJt(STATE.processed.reduce((a,d)=>a+d.bersih,0))}`);
+
+  saveSession();
+  toast(`✓ ${STATE.processed.length} pegawai berhasil diolah`,'success');
+  setTimeout(()=>goStep(3),800);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// RENDER REVIEW
+// ═══════════════════════════════════════════════════════════════════
+function renderReview(){
+  const d=STATE.processed;
+  if(!d.length) return;
+
+  // Stats
+  const sumTukin=d.reduce((a,r)=>a+r.tukin,0);
+  const sumPajak=d.reduce((a,r)=>a+r.pph21,0);
+  const sumBaznas=d.reduce((a,r)=>a+r.baznas,0);
+  const sumPot=d.reduce((a,r)=>a+r.totalPot,0);
+  const sumBersih=d.reduce((a,r)=>a+r.bersih,0);
+
+  document.getElementById('reviewStats').innerHTML=`
+    <div class="stat-card acc"><div class="sv">${d.length}</div><div class="sl">Pegawai</div></div>
+    <div class="stat-card amber"><div class="sv">${fmtJt(sumTukin)}</div><div class="sl">Total Tukin</div></div>
+    <div class="stat-card red"><div class="sv">${fmtJt(sumPajak)}</div><div class="sl">Total PPh 21</div></div>
+    <div class="stat-card red"><div class="sv">${fmtJt(sumPot)}</div><div class="sl">Total Potongan</div></div>
+    <div class="stat-card green"><div class="sv">${fmtJt(sumBersih)}</div><div class="sl">Total Bersih</div></div>
+  `;
+
+  // Warnings
+  const warns=[];
+  const noGaji=d.filter(r=>!r.gajiPokok);
+  const noNorek=d.filter(r=>!r.norek);
+  const negBersih=d.filter(r=>r.bersih<0);
+  if(noGaji.length) warns.push(`⚠️ ${noGaji.length} pegawai tidak ditemukan di file gaji (DPP hanya dari tukin)`);
+  if(noNorek.length) warns.push(`⚠️ ${noNorek.length} pegawai tidak ada nomor rekening`);
+  if(negBersih.length) warns.push(`🔴 ${negBersih.length} pegawai bersih diterima MINUS — cek potongan`);
+  const wCard=document.getElementById('warningsCard');
+  if(warns.length){
+    wCard.style.display='block';
+    document.getElementById('warningsList').innerHTML=warns.map(w=>`<div class="alert alert-warn" style="margin-bottom:6px">${w}</div>`).join('');
+  } else {
+    wCard.style.display='none';
+  }
+
+  // Table
+  document.getElementById('reviewBody').innerHTML=d.map((r,i)=>`
+    <tr>
+      <td class="mono" style="color:var(--muted2);font-size:10px">${i+1}</td>
+      <td class="mono" style="font-size:10px;color:var(--muted)">${r.nip}</td>
+      <td><div class="tbl-name">${r.nama}</div><div class="tbl-unit">${r.unit.replace('UPTD Pengelolaan Pendapatan Daerah ','UPTD ')}</div></td>
+      <td><span class="tag tag-gol">${r.gol}</span></td>
+      <td><span class="tag ${r.jenis==='PNS'?'tag-pns':'tag-pppk'}">${r.jenis}</span></td>
+      <td style="font-size:10px;color:var(--muted);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.unit.replace('UPTD Pengelolaan Pendapatan Daerah ','UPTD ')}</td>
+      <td class="r"><span class="amt">${fmtRp(r.tukin)}</span></td>
+      <td class="r"><span class="amt amt-muted">${r.gajiPokok?fmtRp(r.gajiPokok):'<span class="miss-cell">—</span>'}</span></td>
+      <td class="r"><span class="amt amt-muted">${r.tunjab?fmtRp(r.tunjab):'—'}</span></td>
+      <td class="r"><span class="amt">${fmtRp(r.dpp)}</span></td>
+      <td class="c"><span class="mono" style="font-size:11px;color:var(--muted)">${r.ter}%</span></td>
+      <td class="r">${r.pph21?`<span class='amt' style='color:var(--acc)'>${fmtRp(r.pph21)} <span style='font-size:9px;background:var(--acc-l);color:var(--acc);border:1px solid var(--acc-b);padding:1px 4px;border-radius:3px'>${r.pph21DTP?'DTP':''}</span></span>`:'—'}</td>
+      <td class="r"><span class="amt amt-red">${r.baznas?'-'+fmtRp(r.baznas):'—'}</span></td>
+      <td class="r"><span class="amt ${r.potKop?'amt-red':'amt-muted'}">${r.potKop?'-'+fmtRp(r.potKop):'—'}</span></td>
+      <td class="r"><span class="amt ${r.potBprs?'amt-red':'amt-muted'}">${r.potBprs?'-'+fmtRp(r.potBprs):'—'}</span></td>
+      <td class="r"><span class="amt ${r.potBprb?'amt-red':'amt-muted'}">${r.potBprb?'-'+fmtRp(r.potBprb):'—'}</span></td>
+      <td class="r"><span class="amt amt-red" style="font-size:12px">-${fmtRp(r.totalPot)}</span></td>
+      <td class="r"><span class="amt amt-big ${r.bersih<0?'amt-red':'amt-green'}">${fmtRp(r.bersih)}</span></td>
+      <td class="mono" style="font-size:10px;color:var(--muted)">${r.norek||'<span class="miss-cell">kosong</span>'}</td>
+      <td class="mono" style="font-size:10px;color:var(--muted)">${r.npwp||'—'}</td>
+    </tr>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// STEP 4: PDF SETUP
+// ═══════════════════════════════════════════════════════════════════
+function renderPDFStep(){
+  const d=STATE.processed;
+  // Populate unit filter
+  const units=[...new Set(d.map(r=>r.unit))].sort();
+  const sel=document.getElementById('pdf-unit');
+  sel.innerHTML='<option value="">Semua Unit</option>';
+  units.forEach(u=>{
+    const o=document.createElement('option');
+    o.value=u; o.textContent=u.replace('UPTD Pengelolaan Pendapatan Daerah ','UPTD ');
+    sel.appendChild(o);
+  });
+  sel.addEventListener('change', updatePDFStats);
+  updatePDFStats();
+}
+
+function updatePDFStats(){
+  const unit=document.getElementById('pdf-unit').value;
+  const all=unit?STATE.processed.filter(r=>r.unit===unit):STATE.processed;
+  const pns=all.filter(r=>r.jenis==='PNS');
+  const pppk=all.filter(r=>r.jenis!=='PNS');
+  const sBersihPDF=arr=>arr.reduce((a,r)=>a+(r.tukin-r.baznas),0);
+  const sBersihTrf=arr=>arr.reduce((a,r)=>a+r.bersih,0);
+  const sTukin=arr=>arr.reduce((a,r)=>a+r.tukin,0);
+  document.getElementById('pdfStats').innerHTML=`
+    <div class="stat-card" style="grid-column:span 5">
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:0;text-align:center">
+        <div style="padding:10px;border-right:1px solid var(--border)">
+          <div style="font-family:'Geist Mono',monospace;font-size:18px;font-weight:700;color:var(--acc)">${all.length}</div>
+          <div style="font-size:9.5px;color:var(--muted);margin-top:3px;text-transform:uppercase;letter-spacing:.5px">Total Pegawai</div>
+        </div>
+        <div style="padding:10px;border-right:1px solid var(--border)">
+          <div style="font-family:'Geist Mono',monospace;font-size:16px;font-weight:700;color:var(--acc)">${pns.length} <span style="font-size:11px;color:var(--muted)">PNS</span></div>
+          <div style="font-family:'Geist Mono',monospace;font-size:16px;font-weight:700;color:var(--amber)">${pppk.length} <span style="font-size:11px;color:var(--muted)">PPPK</span></div>
+        </div>
+        <div style="padding:10px;border-right:1px solid var(--border)">
+          <div style="font-family:'Geist Mono',monospace;font-size:12px;font-weight:700;color:var(--amber)">${fmtJt(sTukin(all))}</div>
+          <div style="font-size:9px;color:var(--muted);margin:2px 0">PNS: ${fmtJt(sTukin(pns))}</div>
+          <div style="font-size:9px;color:var(--muted)">PPPK: ${fmtJt(sTukin(pppk))}</div>
+          <div style="font-size:9.5px;color:var(--muted);margin-top:3px;text-transform:uppercase;letter-spacing:.5px">Tukin Bruto</div>
+        </div>
+        <div style="padding:10px;border-right:1px solid var(--border)">
+          <div style="font-family:'Geist Mono',monospace;font-size:12px;font-weight:700;color:var(--green)">${fmtJt(sBersihPDF(all))}</div>
+          <div style="font-size:9px;color:var(--muted);margin:2px 0">PNS: ${fmtJt(sBersihPDF(pns))}</div>
+          <div style="font-size:9px;color:var(--muted)">PPPK: ${fmtJt(sBersihPDF(pppk))}</div>
+          <div style="font-size:9.5px;color:var(--muted);margin-top:3px;text-transform:uppercase;letter-spacing:.5px">Tukin Bersih (PDF)</div>
+        </div>
+        <div style="padding:10px">
+          <div style="font-family:'Geist Mono',monospace;font-size:12px;font-weight:700;color:var(--green)">${fmtJt(sBersihTrf(all))}</div>
+          <div style="font-size:9px;color:var(--muted);margin:2px 0">PNS: ${fmtJt(sBersihTrf(pns))}</div>
+          <div style="font-size:9px;color:var(--muted)">PPPK: ${fmtJt(sBersihTrf(pppk))}</div>
+          <div style="font-size:9.5px;color:var(--muted);margin-top:3px;text-transform:uppercase;letter-spacing:.5px">Bersih Transfer</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// EXPORT DAFTAR TRANSFER (EXCEL)
+// ═══════════════════════════════════════════════════════════════════
+function exportTransferExcel(jenis){
+  const unit=document.getElementById('pdf-unit').value;
+  let d=unit?STATE.processed.filter(r=>r.unit===unit):STATE.processed;
+  if(jenis==='PNS') d=d.filter(r=>r.jenis==='PNS');
+  else if(jenis==='PPPK') d=d.filter(r=>r.jenis!=='PNS');
+  const periode=document.getElementById('pdf-periode').value||'';
+  const satorg=document.getElementById('pdf-satorg').value||'BADAN PENDAPATAN DAERAH';
+
+  if(!d.length){ toast('Tidak ada data untuk diekspor','error'); return; }
+
+  const wb = XLSX.utils.book_new();
+
+  // ── Sheet 1: Daftar Transfer ─────────────────────────────────────
+  const headers = [
+    'No','NIP','Nama','Golongan','Jabatan','Unit Kerja','Jenis',
+    'Tukin Bruto','PPh 21','BAZNAS','Pot. Koperasi','Pot. BPR Serang','Pot. BPR Balaraja',
+    'Total Potongan','Bersih Diterima','Nomor Rekening','NPWP'
+  ];
+  const rows = d.map((r,i)=>[
+    i+1, r.nip, r.nama, r.gol, r.jabatan, r.unit, r.jenis,
+    r.tukin, r.pph21, r.baznas, r.potKop, r.potBprs, r.potBprb,
+    r.totalPot, r.bersih, r.norek||'', r.npwp||''
+  ]);
+
+  // Title rows
+  const titleRows = [
+    [`DAFTAR TRANSFER TAMBAHAN PENGHASILAN PEGAWAI ASN`],
+    [`${satorg} — PEMERINTAH PROVINSI BANTEN`],
+    [`Periode: ${periode}`],
+    [],
+    headers,
+    ...rows,
+    [],
+    ['','','','','','','JUMLAH',
+      d.reduce((a,r)=>a+r.tukin,0),
+      d.reduce((a,r)=>a+r.pph21,0),
+      d.reduce((a,r)=>a+r.baznas,0),
+      d.reduce((a,r)=>a+r.potKop,0),
+      d.reduce((a,r)=>a+r.potBprs,0),
+      d.reduce((a,r)=>a+r.potBprb,0),
+      d.reduce((a,r)=>a+r.totalPot,0),
+      d.reduce((a,r)=>a+r.bersih,0),
+      '','']
+  ];
+
+  const ws1 = XLSX.utils.aoa_to_sheet(titleRows);
+
+  // Column widths
+  ws1['!cols'] = [
+    {wch:5},{wch:20},{wch:30},{wch:7},{wch:35},{wch:40},{wch:6},
+    {wch:15},{wch:14},{wch:14},{wch:14},{wch:14},{wch:14},
+    {wch:15},{wch:16},{wch:22},{wch:18}
+  ];
+
+  // Merge title cells
+  ws1['!merges'] = [
+    {s:{r:0,c:0},e:{r:0,c:16}},
+    {s:{r:1,c:0},e:{r:1,c:16}},
+    {s:{r:2,c:0},e:{r:2,c:16}},
+  ];
+
+  XLSX.utils.book_append_sheet(wb, ws1, 'Daftar Transfer');
+
+  // ── Sheet 2: Ringkasan per Unit ───────────────────────────────────
+  const byUnit = {};
+  d.forEach(r=>{
+    if(!byUnit[r.unit]) byUnit[r.unit]={pegawai:0,tukin:0,pajak:0,baznas:0,kop:0,bprs:0,bprb:0,pot:0,bersih:0};
+    const u=byUnit[r.unit];
+    u.pegawai++; u.tukin+=r.tukin; u.pajak+=r.pph21; u.baznas+=r.baznas;
+    u.kop+=r.potKop; u.bprs+=r.potBprs; u.bprb+=r.potBprb;
+    u.pot+=r.totalPot; u.bersih+=r.bersih;
+  });
+  const unitRows=[
+    [`RINGKASAN PER UNIT KERJA — ${periode}`],[],
+    ['Unit Kerja','Pegawai','Tukin Bruto','PPh 21','BAZNAS','Koperasi','BPR Serang','BPR Balaraja','Total Potongan','Bersih Transfer'],
+    ...Object.entries(byUnit).sort((a,b)=>b[1].bersih-a[1].bersih).map(([unit,v])=>[
+      unit, v.pegawai, v.tukin, v.pajak, v.baznas, v.kop, v.bprs, v.bprb, v.pot, v.bersih
+    ]),
+    [],
+    ['TOTAL', d.length,
+      d.reduce((a,r)=>a+r.tukin,0), d.reduce((a,r)=>a+r.pph21,0),
+      d.reduce((a,r)=>a+r.baznas,0), d.reduce((a,r)=>a+r.potKop,0),
+      d.reduce((a,r)=>a+r.potBprs,0), d.reduce((a,r)=>a+r.potBprb,0),
+      d.reduce((a,r)=>a+r.totalPot,0), d.reduce((a,r)=>a+r.bersih,0)
+    ]
+  ];
+  const ws2 = XLSX.utils.aoa_to_sheet(unitRows);
+  ws2['!cols']=[{wch:42},{wch:10},{wch:16},{wch:14},{wch:14},{wch:14},{wch:14},{wch:14},{wch:16},{wch:16}];
+  ws2['!merges']=[{s:{r:0,c:0},e:{r:0,c:9}}];
+  XLSX.utils.book_append_sheet(wb, ws2, 'Ringkasan Unit');
+
+  // Save
+  const filename = `Daftar_Transfer_Tukin_${jenis}_${periode.replace(/\s+/g,'_')}_${unit?unit.replace(/\s+/g,'_'):'Semua'}.xlsx`;
+  XLSX.writeFile(wb, filename);
+  toast(`✓ Daftar Transfer diekspor: ${d.length} pegawai`, 'success');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// GENERATE PDF
+// ═══════════════════════════════════════════════════════════════════
+function generatePDF(jenis='semua'){
+  const unit=document.getElementById('pdf-unit').value;
+  let d=unit?STATE.processed.filter(r=>r.unit===unit):STATE.processed;
+  if(jenis==='PNS') d=d.filter(r=>r.jenis==='PNS');
+  else if(jenis==='PPPK') d=d.filter(r=>r.jenis!=='PNS');
+  const jenisLabel=jenis==='semua'?'Semua Pegawai':jenis;
+  const periode=document.getElementById('pdf-periode').value||'—';
+  const satorg=document.getElementById('pdf-satorg').value;
+  const kaban=document.getElementById('pdf-kaban').value||'............................';
+  const kabanNIP=document.getElementById('pdf-kaban-nip').value||'NIP. ............................';
+  const bendahara=document.getElementById('pdf-bendahara').value||'............................';
+  const bendaharaNIP=document.getElementById('pdf-bendahara-nip').value||'NIP. ............................';
+  const tempat=document.getElementById('pdf-tempat').value||'Serang, ......................';
+
+  // PDF hanya sampai Tukin Bersih = Tukin - PPh21 - BAZNAS (tanpa Koperasi/BPR)
+  const sumTukin=d.reduce((a,r)=>a+r.tukin,0);
+  const sumPajak=d.reduce((a,r)=>a+r.pph21,0);
+  const sumBaznas=d.reduce((a,r)=>a+r.baznas,0);
+  const sumTukinBersih=d.reduce((a,r)=>a+(r.tukin-r.baznas),0);
+
+  const rows=d.map((r,i)=>{
+    const tukinBersih=r.tukin-r.baznas;  // PPh21 DTP / tidak dipotong
+    return `
+    <tr>
+      <td style="text-align:center;font-size:9px">${i+1}</td>
+      <td style="font-size:9px;white-space:nowrap">${r.nip}</td>
+      <td style="font-size:9.5px;min-width:130px"><strong>${r.nama}</strong><br><span style="color:#555;font-size:8px">${r.jabatan}</span></td>
+      <td style="text-align:center;font-size:9px">${r.gol}</td>
+      <td style="text-align:right;font-size:9px">${fmtRp(r.tukin)}</td>
+      <td style="text-align:center;font-size:9px">${r.ter}%</td>
+      <td style="text-align:right;font-size:9px;color:#dc2626">${r.pph21?fmtRp(r.pph21):'—'}</td>
+      <td style="text-align:right;font-size:9px;color:#dc2626">${r.baznas?fmtRp(r.baznas):'—'}</td>
+      <td style="text-align:right;font-size:10px;font-weight:700;color:#16a34a">${fmtRp(tukinBersih)}</td>
+      <td style="font-size:8.5px;color:#555">${r.npwp||'—'}</td>
+    </tr>`;
+  }).join('');
+
+  const html=`
+  <div style="font-family:'Times New Roman',serif;max-width:100%;font-size:11px">
+    <div style="text-align:center;margin-bottom:16px;border-bottom:3px double #000;padding-bottom:12px">
+      <div style="font-size:11px;font-weight:bold;letter-spacing:.5px">PEMERINTAH PROVINSI BANTEN</div>
+      <div style="font-size:14px;font-weight:bold;margin:4px 0">DAFTAR PEMBAYARAN</div>
+      <div style="font-size:10px;font-weight:bold;color:#555;margin-bottom:2px">${jenisLabel}</div>
+      <div style="font-size:12px;font-weight:bold">TAMBAHAN PENGHASILAN PEGAWAI APARATUR SIPIL NEGARA</div>
+      <div style="font-size:10px;margin-top:6px">Nama Satuan Organisasi &nbsp;: ${satorg}</div>
+      <div style="font-size:10px">Periode &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: ${periode}</div>
+    </div>
+
+    <table style="width:100%;border-collapse:collapse;font-family:'Times New Roman',serif;font-size:9px">
+      <thead>
+        <tr style="background:#f0f0f0">
+          <th rowspan="2" style="border:1px solid #999;padding:5px 4px;text-align:center;width:28px">No</th>
+          <th rowspan="2" style="border:1px solid #999;padding:5px 4px">NIP</th>
+          <th rowspan="2" style="border:1px solid #999;padding:5px 4px">Nama / Jabatan</th>
+          <th rowspan="2" style="border:1px solid #999;padding:5px 4px;text-align:center">Gol</th>
+          <th rowspan="2" style="border:1px solid #999;padding:5px 4px;text-align:right">Tukin Bruto</th>
+          <th colspan="3" style="border:1px solid #999;padding:5px 4px;text-align:center">Potongan</th>
+          <th rowspan="2" style="border:1px solid #999;padding:5px 4px;text-align:right">Tukin Bersih</th>
+          <th rowspan="2" style="border:1px solid #999;padding:5px 4px">NPWP</th>
+        </tr>
+        <tr style="background:#f0f0f0">
+          <th style="border:1px solid #999;padding:4px;text-align:center;font-size:8px">TER</th>
+          <th style="border:1px solid #999;padding:4px;text-align:right;font-size:8px">PPh 21</th>
+          <th style="border:1px solid #999;padding:4px;text-align:right;font-size:8px">BAZNAS</th>
+        </tr>
+        <tr style="background:#e8e8e8;font-size:8px;text-align:center;color:#555">
+          <th style="border:1px solid #999;padding:2px">(1)</th><th style="border:1px solid #999;padding:2px">(2)</th>
+          <th style="border:1px solid #999;padding:2px">(3)</th><th style="border:1px solid #999;padding:2px">(4)</th>
+          <th style="border:1px solid #999;padding:2px">(5)</th><th style="border:1px solid #999;padding:2px">(6)</th>
+          <th style="border:1px solid #999;padding:2px">(7)</th><th style="border:1px solid #999;padding:2px">(8)</th>
+          <th style="border:1px solid #999;padding:2px">(9)</th><th style="border:1px solid #999;padding:2px">(10)</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+      <tfoot>
+        <tr style="background:#f5f5f5;font-weight:bold">
+          <td colspan="4" style="border:1px solid #999;padding:5px 4px;text-align:center;font-size:10px">JUMLAH</td>
+          <td style="border:1px solid #999;padding:5px 4px;text-align:right;font-size:9.5px">${fmtRp(sumTukin)}</td>
+          <td style="border:1px solid #999;padding:5px 4px"></td>
+          <td style="border:1px solid #999;padding:5px 4px;text-align:right;font-size:9.5px;color:#dc2626">${fmtRp(sumPajak)}</td>
+          <td style="border:1px solid #999;padding:5px 4px;text-align:right;font-size:9.5px;color:#dc2626">${fmtRp(sumBaznas)}</td>
+          <td style="border:1px solid #999;padding:5px 4px;text-align:right;font-size:10px;color:#16a34a">${fmtRp(sumTukinBersih)}</td>
+          <td style="border:1px solid #999;padding:5px 4px"></td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <div style="margin-top:16px;font-size:9.5px;color:#555;border-top:1px solid #ccc;padding-top:8px">
+      Catatan: (1) PPh 21 dihitung menggunakan TER Kategori A (TK/0) sesuai PMK 168/2023. &nbsp;
+      (2) DPP = Tukin + Gaji Pokok + Tunjangan Jabatan. &nbsp;
+      (3) BAZNAS = 2,5% × Tukin Bruto. &nbsp;
+      (4) PPh 21 PNS bersifat DTP (Ditanggung Pemerintah) — tidak mengurangi take home pegawai. &nbsp;
+      (5) PPPK tidak dikenakan PPh 21. &nbsp;
+      (6) Tukin Bersih = Tukin Bruto − BAZNAS.
+    </div>
+
+    <div style="margin-top:32px;display:flex;justify-content:space-between;font-size:10px">
+      <div style="text-align:center;min-width:200px">
+        <div style="margin-bottom:2px">Mengetahui,</div>
+        <div>Kepala Badan Pendapatan Daerah</div>
+        <div>Provinsi Banten</div>
+        <div style="height:70px"></div>
+        <div style="border-top:1.5px solid #000;padding-top:4px;font-weight:bold">${kaban}</div>
+        <div>${kabanNIP.startsWith('NIP')?kabanNIP:'NIP. '+kabanNIP}</div>
+      </div>
+      <div style="text-align:center;min-width:180px">
+        <div>${tempat}</div>
+        <div style="margin-top:4px">Bendahara Pengeluaran,</div>
+        <div style="height:70px"></div>
+        <div style="border-top:1.5px solid #000;padding-top:4px;font-weight:bold">${bendahara}</div>
+        <div>${bendaharaNIP.startsWith('NIP')?bendaharaNIP:'NIP. '+bendaharaNIP}</div>
+      </div>
+    </div>
+  </div>`;
+
+  document.getElementById('pdfContent').innerHTML=html;
+  document.getElementById('pdfPreview').style.display='block';
+}
+
+function closePdfPreview(){ document.getElementById('pdfPreview').style.display='none'; }
+function printPDF(){
+  // Ensure preview is visible for print
+  const el=document.getElementById('pdfPreview');
+  const wasHidden=el.style.display==='none';
+  if(wasHidden) el.style.display='block';
+  window.print();
+  if(wasHidden) el.style.display='none';
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// EXPORT CSV
+// ═══════════════════════════════════════════════════════════════════
+function exportReviewCSV(){
+  const h=['No','NIP','Nama','Gol','Jenis','Unit Kerja','Tukin Bruto','Gaji Pokok','Tunjab','DPP Pajak','TER %','PPh 21','BAZNAS','Koperasi','BPR Serang','BPR Balaraja','Total Potongan','Bersih Diterima','Nomor Rekening','NPWP'];
+  const rows=STATE.processed.map((r,i)=>[i+1,r.nip,`"${r.nama}"`,r.gol,r.jenis,`"${r.unit}"`,r.tukin,r.gajiPokok,r.tunjab,r.dpp,r.ter,r.pph21,r.baznas,r.potKop,r.potBprs,r.potBprb,r.totalPot,r.bersih,r.norek,r.npwp]);
+  const csv=[h.join(','),...rows.map(r=>r.join(','))].join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
+  a.download=`tukin_olahan_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  toast('✓ CSV diekspor','success');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// SESSION (localStorage)
+// ═══════════════════════════════════════════════════════════════════
+function saveSession(){
+  try {
+    localStorage.setItem('tukin_processed', JSON.stringify(STATE.processed));
+    localStorage.setItem('tukin_rawbkd', JSON.stringify(STATE.rawData.bkd));
+    updateSidebarStatus();
+  } catch(e){ toast('Gagal simpan sesi (data terlalu besar?)','warn'); }
+}
+
+function loadSession(){
+  try {
+    const p=localStorage.getItem('tukin_processed');
+    const b=localStorage.getItem('tukin_rawbkd');
+    if(p){ STATE.processed=JSON.parse(p); }
+    if(b){ STATE.rawData.bkd=JSON.parse(b); }
+    if(STATE.processed.length){
+      toast(`Sesi sebelumnya dimuat: ${STATE.processed.length} pegawai`,'success');
+      updateSidebarStatus();
+    }
+  } catch(e){}
+}
+
+function clearSession(){
+  if(!confirm('Reset semua data sesi ini?')) return;
+  localStorage.removeItem('tukin_processed');
+  localStorage.removeItem('tukin_rawbkd');
+  STATE.processed=[];
+  STATE.rawData={bkd:[],plt:{},gajiPNS:{},gajiPPPK:{},kop:{},bprs:{},bprb:{},norek:{}};
+  updateSidebarStatus();
+  goStep(1);
+  toast('Sesi direset','warn');
+}
+
+function updateSidebarStatus(){
+  const d=STATE.processed;
+  document.getElementById('ss-bkd').textContent=STATE.rawData.bkd.length?STATE.rawData.bkd.length+' baris':'—';
+  document.getElementById('ss-plt').textContent=Object.keys(STATE.rawData.plt||{}).length?Object.keys(STATE.rawData.plt).length+' baris':'—';
+  document.getElementById('ss-gaji-pns').textContent=Object.keys(STATE.rawData.gajiPNS||{}).length?Object.keys(STATE.rawData.gajiPNS).length+' baris':'—';
+  document.getElementById('ss-gaji-pppk').textContent=Object.keys(STATE.rawData.gajiPPPK||{}).length?Object.keys(STATE.rawData.gajiPPPK).length+' baris':'—';
+  document.getElementById('ss-kop').textContent=Object.keys(STATE.rawData.kop||{}).length?'✓':'—';
+  document.getElementById('ss-bprs').textContent=Object.keys(STATE.rawData.bprs||{}).length?'✓':'—';
+  document.getElementById('ss-bprb').textContent=Object.keys(STATE.rawData.bprb||{}).length?'✓':'—';
+  document.getElementById('ss-norek').textContent=Object.keys(STATE.rawData.norek||{}).length?Object.keys(STATE.rawData.norek).length+' baris':'—';
+  document.getElementById('ss-total').textContent=d.length?d.length+' pegawai':'—';
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// BOOT
+// ═══════════════════════════════════════════════════════════════════
+// Confirm mapping buttons
+document.getElementById('gajiPNSMapperCard').insertAdjacentHTML('beforeend',
+  '<div style="margin-top:10px"><button class="btn btn-amber" onclick="applyGajiMapping(&quot;PNS&quot;)">✓ Terapkan Mapping Gaji PNS</button></div>');
+document.getElementById('gajiPPPKMapperCard').insertAdjacentHTML('beforeend',
+  '<div style="margin-top:10px"><button class="btn btn-amber" onclick="applyGajiMapping(&quot;PPPK&quot;)">✓ Terapkan Mapping Gaji PPPK</button></div>');
+document.getElementById('norekMapperCard').insertAdjacentHTML('beforeend',
+  '<div style="margin-top:10px"><button class="btn btn-amber" onclick="applyNorekMapping()">✓ Terapkan Mapping Norek/NPWP</button></div>');
+
+loadSession();
+</script>
+</body>
+</html>
